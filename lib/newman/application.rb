@@ -2,8 +2,9 @@ module Newman
   class Application
     include Filters
 
+    
     def initialize(&block)
-      self.callbacks  = []
+      self.filters  = []
       self.matchers   = {}
       self.extensions = []
 
@@ -32,33 +33,24 @@ module Newman
       matchers[id.to_s] = pattern
     end
 
-    def callback(action, filter)
-      callbacks << { :filter   => filter, 
-                     :action   => action }
+    def compile_regex(pattern)
+      Regexp.escape(pattern)
+                    .gsub(/\\{(.*?)\\}/) { |m| "(?<#{$1}>#{matchers[$1]})" } 
     end
 
     private
 
-    attr_accessor :callbacks, :default_callback, :matchers, :extensions
+    attr_accessor :filters, :default_callback, :matchers, :extensions
 
-    def compile_regex(pattern)
-      regex = Regexp.escape(pattern)
-                    .gsub(/\\{(.*?)\\}/) { |m| "(?<#{$1}>#{matchers[$1]})" } 
-    end
 
     def trigger_callbacks(controller)
-      matched_callbacks = callbacks.select do |e| 
-        filter = e[:filter]
-        e[:match_data] = controller.instance_exec(&filter)
-      end
+      matched_filters = filters.select { |filter| filter.match?(controller) }
 
-      if matched_callbacks.empty?
+      if matched_filters.empty?
         controller.instance_exec(&default_callback) 
       else
-        matched_callbacks.each do |e|
-          action = e[:action]
-          controller.params = e[:match_data] || {}
-          controller.instance_exec(&action)
+        matched_filters.each do |filter|
+          controller.perform(filter)
         end
       end
     end

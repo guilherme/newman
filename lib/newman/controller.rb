@@ -8,6 +8,10 @@ module Newman
 
     attr_accessor :params, :settings, :request, :response
 
+    def perform(filter)
+      instance_exec(&filter.action)
+    end
+
 
     def respond(params)
       params.each { |k,v| response.send("#{k}=", v) }
