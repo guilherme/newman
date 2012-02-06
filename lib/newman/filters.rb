@@ -2,15 +2,11 @@ module Newman
   module Filters
     class Filter
   
-        attr_accessor :action, :type, :application
-        attr_reader   :pattern, :matcher
+        attr_accessor :action, :type, :application, :pattern
+        attr_reader   :matcher
 
         def initialize(type, pattern, action, application)
           self.type, self.pattern, self.action, self.application = type, pattern, action, application
-        end
-
-        def pattern=(pattern)
-          @pattern = pattern
         end
 
         def match?(controller)
